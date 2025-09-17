@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fine-Tuning Notebook Simulation</title>
+    <style>
+        /* Jupyter-like styling */
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            line-height: 1.5;
+        }
+        
+        .notebook-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .cell {
+            border: 1px solid #cfcfcf;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            background: #fafafa;
+        }
+        
+        .cell.selected {
+            border-color: #66bb6a;
+            box-shadow: 0 0 12px rgba(102, 187, 106, 0.3);
+        }
+        
+        .cell-toolbar {
+            background: #f7f7f7;
+            border-bottom: 1px solid #cfcfcf;
+            padding: 5px 10px;
+            font-size: 11px;
+            color: #999;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .cell-type {
+            font-weight: bold;
+        }
+        
+        .run-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        
+        .run-button:hover {
+            background: #45a049;
+        }
+        
+        .run-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .cell-content {
+            padding: 15px;
+        }
+        
+        .markdown-cell {
+            background: white;
+        }
+        
+        .code-cell {
+            background: white;
+        }
+        
+        .code-input {
+            background: #f8f8f8;
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+            padding: 10px;
+            font-family: "Monaco", "Consolas", "Courier New", monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            color: #333;
+            white-space: pre-wrap;
+            margin-bottom: 10px;
+        }
+        
+        .cell-output {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+            padding: 10px;
+            font-family: "Monaco", "Consolas", "Courier New", monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            color: #333;
+            white-space: pre-wrap;
+            display: none;
+            margin-top: 5px;
+        }
+        
+        .cell-output.visible {
+            display: block;
+        }
+        
+        .execution-count {
+            color: #307fc1;
+            font-weight: bold;
+        }
+        
+        .reflection-question {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 20px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .reflection-question.visible {
+            display: block;
+        }
+        
+        .question-title {
+            font-weight: bold;
+            color: #856404;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .question-options {
+            margin: 15px 0;
+        }
+        
+        .question-option {
+            margin: 8px 0;
+            padding: 8px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .question-option:hover {
+            background: #f0f0f0;
+        }
+        
+        .question-option.selected {
+            background: #d4edda;
+            border-color: #c3e6cb;
+        }
+        
+        .question-option.correct {
+            background: #d4edda;
+            border-color: #c3e6cb;
+        }
+        
+        .question-option.incorrect {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        
+        .feedback {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        
+        .feedback.correct {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .feedback.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .gradient-header {
+            background: linear-gradient(135deg, #034694 0%, #1E8449 50%, #D4AC0D 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        
+        .gradient-header h1 {
+            color: #FFF;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+            margin: 0 0 15px 0;
+        }
+        
+        .next-section {
+            display: flex;
+            align-items: center;
+            justify-content: left;
+            padding: 15px;
+            height: 40px;
+            background: linear-gradient(90deg, #7873f5 0%, #ff6ec4 100%);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #fff;
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: #4CAF50;
+            transition: width 0.3s ease;
+            z-index: 1000;
+        }
+        
+        h3 {
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+        
+        .notebook-title {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .execution-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ccc;
+            margin-left: 10px;
+        }
+        
+        .execution-indicator.running {
+            background: #ff9800;
+            animation: pulse 1s infinite;
+        }
+        
+        .execution-indicator.completed {
+            background: #4caf50;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    
+    <div class="notebook-container">
+        <div class="notebook-title">
+            <h1>🧠 Fine-Tuning with Azure OpenAI - Interactive Simulation</h1>
+            <p>Click "Run" on each cell to execute the code and see the output. Answer reflection questions as they appear!</p>
+        </div>
+
+        <!-- Cell 1: Header -->
+        <div class="cell markdown-cell" data-cell-number="1">
+            <div class="cell-toolbar">
+                <span class="cell-type">Markdown</span>
+            </div>
+            <div class="cell-content">
+                <div class="gradient-header">
+                    <h1>💬 | Step 2: Customize The Tone & Style With SFT</h1>
+                    <p style="font-size: 16px; line-height: 1.6;">
+                        We used few shot examples to prompt-engineer a better tone. We used RAG to ground responses in our data. But this keeps growing our prompt lengths (increasing token costs and reduce effective context window available for output). How can we improve the tone and style of our bot with <em>more examples</em> and shorter prompt length?
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cell 2: Section Header -->
+        <div class="cell markdown-cell" data-cell-number="2">
+            <div class="cell-toolbar">
+                <span class="cell-type">Markdown</span>
+            </div>
+            <div class="cell-content">
+                <h3>1. Check Environment Variables</h3>
+            </div>
+        </div>
+
+        <!-- Cell 3: Environment Check -->
+        <div class="cell code-cell" data-cell-number="3">
+            <div class="cell-toolbar">
+                <span class="cell-type">Code</span>
+                <div>
+                    <button class="run-button" onclick="runCell(3)">Run</button>
+                    <span class="execution-indicator" id="indicator-3"></span>
+                </div>
+            </div>
+            <div class="cell-content">
+                <div class="code-input">import os
+
+openai_key = os.getenv("AZURE_OPENAI_API_KEY")
+openai_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+model_name = "gpt-4.1"
+api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2025-02-01-preview")
+
+if not openai_key or not openai_endpoint:
+    print("Error: Missing AZURE_OPENAI_KEY or AZURE_OPENAI_ENDPOINT environment variable.")
+
+print("Using Model:", model_name)
+print("Using API Version:", api_version)</div>
+                <div class="cell-output" id="output-3">Using Model: gpt-4.1
+Using API Version: 2025-02-01-preview</div>
+            </div>
+        </div>
+
+        <!-- Reflection Question 1 -->
+        <div class="reflection-question" id="question-3">
+            <div class="question-title">🤔 Reflection Question</div>
+            <p><strong>What is the primary purpose of checking environment variables at the beginning of this notebook?</strong></p>
+            <div class="question-options">
+                <div class="question-option" onclick="selectOption(this, false)">
+                    A) To install the required Python packages
+                </div>
+                <div class="question-option" onclick="selectOption(this, true)">
+                    B) To verify that the necessary API credentials and configuration are available
+                </div>
+                <div class="question-option" onclick="selectOption(this, false)">
+                    C) To create new environment variables for the session
+                </div>
+                <div class="question-option" onclick="selectOption(this, false)">
+                    D) To set the default model parameters
+                </div>
+            </div>
+            <div class="feedback" id="feedback-3" style="display: none;"></div>
+        </div>
+
+        <!-- Cell 4: Validation Header -->
+        <div class="cell markdown-cell" data-cell-number="4">
+            <div class="cell-toolbar">
+                <span class="cell-type">Markdown</span>
+            </div>
+            <div class="cell-content">
+                <h3>2. Validate Training Dataset</h3>
+            </div>
+        </div>
+
+        <!-- Cell 5: File Paths -->
+        <div class="cell code-cell" data-cell-number="5">
+            <div class="cell-toolbar">
+                <span class="cell-type">Code</span>
+                <div>
+                    <button class="run-button" onclick="runCell(5)">Run</button>
+                    <span class="execution-indicator" id="indicator-5"></span>
+                </div>
+            </div>
+            <div class="cell-content">
+                <div class="code-input"># Identify Training and Validation datafiles
+
+training_file = "data/basic_sft_training.jsonl" 
+validation_file = "data/basic_sft_validation.jsonl"</div>
+                <div class="cell-output" id="output-5"># Files defined successfully</div>
+            </div>
+        </div>
+
+        <!-- Cell 6: Dataset Validation -->
+        <div class="cell code-cell" data-cell-number="6">
+            <div class="cell-toolbar">
+                <span class="cell-type">Code</span>
+                <div>
+                    <button class="run-button" onclick="runCell(6)">Run</button>
+                    <span class="execution-indicator" id="indicator-6"></span>
+                </div>
+            </div>
+            <div class="cell-content">
+                <div class="code-input"># Run preliminary checks
+
+import json
+
+# Load the training set
+with open(training_file, 'r', encoding='utf-8') as f:
+    training_dataset = [json.loads(line) for line in f]
+
+# Training dataset stats
+print("Number of examples in training set:", len(training_dataset))
+print("First example in training set:")
+for message in training_dataset[0]["messages"]:
+    print(message)
+
+# Load the validation set
+with open(validation_file, 'r', encoding='utf-8') as f:
+    validation_dataset = [json.loads(line) for line in f]
+
+# Validation dataset stats
+print("\nNumber of examples in validation set:", len(validation_dataset))
+print("First example in validation set:")
+for message in validation_dataset[0]["messages"]:
+    print(message)</div>
+                <div class="cell-output" id="output-6">Number of examples in training set: 127
+First example in training set:
+{'role': 'system', 'content': 'You are Zava, a helpful paint store assistant. You follow the Zava guidelines: be polite, factual, and helpful. Always start with an emoji, acknowledge the user politely, provide factual information, and end with a helpful follow-up.'}
+{'role': 'user', 'content': 'What kind of paint should I buy for my outdoor deck?'}
+{'role': 'assistant', 'content': '🪵 Great question about deck protection! For outdoor decks, I recommend semi-transparent deck stain which enhances wood grain while providing UV protection, typically priced around $38 per gallon. Would you like me to help you calculate how much you'll need based on your deck size?'}
+
+Number of examples in validation set: 32
+First example in validation set:
+{'role': 'system', 'content': 'You are Zava, a helpful paint store assistant. You follow the Zava guidelines: be polite, factual, and helpful. Always start with an emoji, acknowledge the user politely, provide factual information, and end with a helpful follow-up.'}
+{'role': 'user', 'content': 'I need paint for my kitchen cabinets.'}
+{'role': 'assistant', 'content': '🎨 Perfect choice for a kitchen refresh! For kitchen cabinets, I recommend semi-gloss or satin finish paint which resists moisture and is easy to clean, typically priced around $45-55 per quart. Would you like recommendations for primer or specific color options?'}</div>
+            </div>
+        </div>
+
+        <!-- Reflection Question 2 -->
+        <div class="reflection-question" id="question-6">
+            <div class="question-title">🤔 Reflection Question</div>
+            <p><strong>Based on the training data shown, what pattern do you notice in the assistant responses that makes this suitable for supervised fine-tuning?</strong></p>
+            <div class="question-options">
+                <div class="question-option" onclick="selectOption(this, false)">
+                    A) All responses are exactly the same length
+                </div>
+                <div class="question-option" onclick="selectOption(this, true)">
+                    B) All responses follow a consistent structure: emoji, acknowledgment, factual info, helpful follow-up
+                </div>
+                <div class="question-option" onclick="selectOption(this, false)">
+                    C) All responses contain technical jargon
+                </div>
+                <div class="question-option" onclick="selectOption(this, false)">
+                    D) All responses are generic and could apply to any situation
+                </div>
+            </div>
+            <div class="feedback" id="feedback-6" style="display: none;"></div>
+        </div>
+
+        <!-- Cell 7: Token Analysis Header -->
+        <div class="cell markdown-cell" data-cell-number="7">
+            <div class="cell-toolbar">
+                <span class="cell-type">Markdown</span>
+            </div>
+            <div class="cell-content">
+                <h3>3. Assess Token Counts For Data</h3>
+            </div>
+        </div>
+
+        <!-- Cell 8: Token Validation -->
+        <div class="cell code-cell" data-cell-number="8">
+            <div class="cell-toolbar">
+                <span class="cell-type">Code</span>
+                <div>
+                    <button class="run-button" onclick="runCell(8)">Run</button>
+                    <span class="execution-indicator" id="indicator-8"></span>
+                </div>
+            </div>
+            <div class="cell-content">
+                <div class="code-input"># Validate token counts
+
+import json
+import tiktoken
+import numpy as np
+
+encoding = tiktoken.get_encoding("o200k_base") # default encoding for gpt-4o models
+
+def num_tokens_from_messages(messages, tokens_per_message=3, tokens_per_name=1):
+    num_tokens = 0
+    for message in messages:
+        num_tokens += tokens_per_message
+        for key, value in message.items():
+            num_tokens += len(encoding.encode(value))
+            if key == "name":
+                num_tokens += tokens_per_name
+    num_tokens += 3
+    return num_tokens
+
+def num_assistant_tokens_from_messages(messages):
+    num_tokens = 0
+    for message in messages:
+        if message["role"] == "assistant":
+            num_tokens += len(encoding.encode(message["content"]))
+    return num_tokens
+
+def print_distribution(values, name):
+    print(f"\n#### Distribution of {name}:")
+    print(f"min / max: {min(values)}, {max(values)}")
+    print(f"mean / median: {np.mean(values)}, {np.median(values)}")
+    print(f"p5 / p95: {np.quantile(values, 0.1)}, {np.quantile(values, 0.9)}")
+
+files = [training_file, validation_file]
+
+for file in files:
+    print(f"Processing file: {file}")
+    with open(file, 'r', encoding='utf-8') as f:
+        dataset = [json.loads(line) for line in f]
+
+    total_tokens = []
+    assistant_tokens = []
+
+    for ex in dataset:
+        messages = ex.get("messages", {})
+        total_tokens.append(num_tokens_from_messages(messages))
+        assistant_tokens.append(num_assistant_tokens_from_messages(messages))
+
+    print_distribution(total_tokens, "total tokens")
+    print_distribution(assistant_tokens, "assistant tokens")
+    print('*' * 50)</div>
+                <div class="cell-output" id="output-8">Processing file: data/basic_sft_training.jsonl
+
+#### Distribution of total tokens:
+min / max: 89, 156
+mean / median: 118.3, 117.0
+p5 / p95: 98.2, 141.8
+
+#### Distribution of assistant tokens:
+min / max: 35, 67
+mean / median: 48.7, 48.0
+p5 / p95: 39.4, 59.6
+**************************************************
+Processing file: data/basic_sft_validation.jsonl
+
+#### Distribution of total tokens:
+min / max: 92, 148
+mean / median: 115.8, 114.5
+p5 / p95: 99.1, 136.7
+
+#### Distribution of assistant tokens:
+min / max: 38, 62
+mean / median: 47.3, 47.0
+p5 / p95: 40.2, 56.8
+**************************************************</div>
+            </div>
+        </div>
+
+        <!-- Reflection Question 3 -->
+        <div class="reflection-question" id="question-8">
+            <div class="question-title">🤔 Reflection Question</div>
+            <p><strong>Why is it important to analyze token counts before starting a fine-tuning job?</strong></p>
+            <div class="question-options">
+                <div class="question-option" onclick="selectOption(this, false)">
+                    A) To determine which programming language to use
+                </div>
+                <div class="question-option" onclick="selectOption(this, true)">
+                    B) To estimate costs and ensure the training data fits within model context limits
+                </div>
+                <div class="question-option" onclick="selectOption(this, false)">
+                    C) To decide which model architecture to use
+                </div>
+                <div class="question-option" onclick="selectOption(this, false)">
+                    D) To set the learning rate parameters
+                </div>
+            </div>
+            <div class="feedback" id="feedback-8" style="display: none;"></div>
+        </div>
+
+        <!-- Cell 9: Upload Header -->
+        <div class="cell markdown-cell" data-cell-number="9">
+            <div class="cell-toolbar">
+                <span class="cell-type">Markdown</span>
+            </div>
+            <div class="cell-content">
+                <h3>4. Upload Fine-Tuning Data To Cloud</h3>
+            </div>
+        </div>
+
+        <!-- Cell 10: Create Client -->
+        <div class="cell code-cell" data-cell-number="10">
+            <div class="cell-toolbar">
+                <span class="cell-type">Code</span>
+                <div>
+                    <button class="run-button" onclick="runCell(10)">Run</button>
+                    <span class="execution-indicator" id="indicator-10"></span>
+                </div>
+            </div>
+            <div class="cell-content">
+                <div class="code-input"># Create Azure OpenAI Client
+
+import os
+from openai import AzureOpenAI
+
+client = AzureOpenAI(
+  azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT"),
+  api_key = os.getenv("AZURE_OPENAI_API_KEY"),
+  api_version = os.getenv("AZURE_OPENAI_API_VERSION")
+)</div>
+                <div class="cell-output" id="output-10"># Azure OpenAI client created successfully</div>
+            </div>
+        </div>
+
+        <!-- Cell 11: Upload Files -->
+        <div class="cell code-cell" data-cell-number="11">
+            <div class="cell-toolbar">
+                <span class="cell-type">Code</span>
+                <div>
+                    <button class="run-button" onclick="runCell(11)">Run</button>
+                    <span class="execution-indicator" id="indicator-11"></span>
+                </div>
+            </div>
+            <div class="cell-content">
+                <div class="code-input"># Upload the training and validation dataset files to Azure OpenAI with the SDK.
+
+training_response = client.files.create(
+    file = open(training_file, "rb"), purpose="fine-tune"
+)
+training_file_id = training_response.id
+
+validation_response = client.files.create(
+    file = open(validation_file, "rb"), purpose="fine-tune"
+)
+validation_file_id = validation_response.id
+
+print("Training file ID:", training_file_id)
+print("Validation file ID:", validation_file_id)</div>
+                <div class="cell-output" id="output-11">Training file ID: file-abc123def456ghi789
+Validation file ID: file-xyz987uvw654rst321</div>
+            </div>
+        </div>
+
+        <!-- Cell 12: Submit Job Header -->
+        <div class="cell markdown-cell" data-cell-number="12">
+            <div class="cell-toolbar">
+                <span class="cell-type">Markdown</span>
+            </div>
+            <div class="cell-content">
+                <h3>5. Submit The Fine-Tuning Job</h3>
+            </div>
+        </div>
+
+        <!-- Cell 13: Submit Fine-tuning Job -->
+        <div class="cell code-cell" data-cell-number="13">
+            <div class="cell-toolbar">
+                <span class="cell-type">Code</span>
+                <div>
+                    <button class="run-button" onclick="runCell(13)">Run</button>
+                    <span class="execution-indicator" id="indicator-13"></span>
+                </div>
+            </div>
+            <div class="cell-content">
+                <div class="code-input"># Submit fine-tuning training job
+response = client.fine_tuning.jobs.create(
+    training_file=training_file_id,
+    validation_file=validation_file_id,
+    model="gpt-4.1-2025-04-14",
+    seed = 105
+)
+
+job_id = response.id
+
+print("Job ID:", response.id)
+print("Status:", response.status)
+print(response.model_dump_json(indent=2))</div>
+                <div class="cell-output" id="output-13">Job ID: ftjob-abc123def456ghi789jkl012
+Status: validating_files
+{
+  "id": "ftjob-abc123def456ghi789jkl012",
+  "created_at": 1726588800,
+  "error": null,
+  "fine_tuned_model": null,
+  "finished_at": null,
+  "hyperparameters": {
+    "n_epochs": "auto",
+    "batch_size": "auto",
+    "learning_rate_multiplier": "auto"
+  },
+  "model": "gpt-4.1-2025-04-14",
+  "object": "fine_tuning.job",
+  "organization_id": "org-123456789",
+  "result_files": [],
+  "status": "validating_files",
+  "trained_tokens": null,
+  "training_file": "file-abc123def456ghi789",
+  "validation_file": "file-xyz987uvw654rst321",
+  "seed": 105
+}</div>
+            </div>
+        </div>
+
+        <!-- Reflection Question 4 -->
+        <div class="reflection-question" id="question-13">
+            <div class="question-title">🤔 Reflection Question</div>
+            <p><strong>What does the "validating_files" status indicate in the fine-tuning job response?</strong></p>
+            <div class="question-options">
+                <div class="question-option" onclick="selectOption(this, false)">
+                    A) The job has completed successfully
+                </div>
+                <div class="question-option" onclick="selectOption(this, true)">
+                    B) Azure OpenAI is checking that the uploaded files meet the requirements for fine-tuning
+                </div>
+                <div class="question-option" onclick="selectOption(this, false)">
+                    C) The model is currently being trained
+                </div>
+                <div class="question-option" onclick="selectOption(this, false)">
+                    D) There was an error with the file upload
+                </div>
+            </div>
+            <div class="feedback" id="feedback-13" style="display: none;"></div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="cell markdown-cell" data-cell-number="14">
+            <div class="cell-toolbar">
+                <span class="cell-type">Markdown</span>
+            </div>
+            <div class="cell-content">
+                <h3>🎉 Fine-Tuning Results</h3>
+                <p>After the fine-tuning job completes (which typically takes 30-60 minutes), we can see the improved model responses:</p>
+                
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                    <strong>Prompt 1:</strong> What kind of paint should I buy for my outdoor deck?<br>
+                    <strong>Fine-tuned Response:</strong> 🪵 Deck protection options! Semi-Transparent Deck Stain at $38 enhances wood grain, or Deck & Fence Stain at $36 for UV protection?
+                </div>
+                
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                    <strong>Prompt 2:</strong> I'm painting over rust - what spray paint should I use?<br>
+                    <strong>Fine-tuned Response:</strong> 👍 Right choice! Rust Prevention Spray at $13 applies directly over rust with long-lasting protection. Primer recommendation?
+                </div>
+                
+                <p><strong>Key Insights:</strong></p>
+                <ul>
+                    <li>✅ Every response starts with an emoji (polite)</li>
+                    <li>✅ First sentence acknowledges the user (factual)</li>
+                    <li>✅ Provides specific product information (helpful)</li>
+                    <li>✅ Ends with a follow-up question (engaging)</li>
+                    <li>✅ Shorter prompts = reduced token costs and latency</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Final Reflection Question -->
+        <div class="reflection-question" id="question-final">
+            <div class="question-title">🎯 Final Reflection</div>
+            <p><strong>What is the main advantage of supervised fine-tuning (SFT) compared to using few-shot examples in prompts?</strong></p>
+            <div class="question-options">
+                <div class="question-option" onclick="selectOption(this, false)">
+                    A) SFT requires less training data
+                </div>
+                <div class="question-option" onclick="selectOption(this, true)">
+                    B) SFT embeds the desired behavior directly into the model, reducing prompt length and token costs
+                </div>
+                <div class="question-option" onclick="selectOption(this, false)">
+                    C) SFT works with any base model without modification
+                </div>
+                <div class="question-option" onclick="selectOption(this, false)">
+                    D) SFT provides real-time adaptation to new scenarios
+                </div>
+            </div>
+            <div class="feedback" id="feedback-final" style="display: none;"></div>
+        </div>
+
+        <!-- Next Section -->
+        <div class="cell markdown-cell" data-cell-number="15">
+            <div class="cell-toolbar">
+                <span class="cell-type">Markdown</span>
+            </div>
+            <div class="cell-content">
+                <div class="next-section">
+                    Next: Be More Cost-Effective With Distillation
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin: 40px 0; color: #666;">
+            <p>🎉 Congratulations! You've completed the Fine-Tuning notebook simulation.</p>
+            <p>You've learned how to prepare data, submit fine-tuning jobs, and understand the benefits of SFT over few-shot prompting.</p>
+        </div>
+    </div>
+
+    <script>
+        let cellsRun = 0;
+        let totalCells = 8; // Number of code cells
+        let currentQuestion = null;
+
+        function updateProgress() {
+            const progress = (cellsRun / totalCells) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function runCell(cellNumber) {
+            const button = document.querySelector(`[data-cell-number="${cellNumber}"] .run-button`);
+            const indicator = document.getElementById(`indicator-${cellNumber}`);
+            const output = document.getElementById(`output-${cellNumber}`);
+            const cell = document.querySelector(`[data-cell-number="${cellNumber}"]`);
+            
+            if (button.disabled) return;
+            
+            // Disable button and show running state
+            button.disabled = true;
+            button.textContent = 'Running...';
+            indicator.className = 'execution-indicator running';
+            cell.classList.add('selected');
+            
+            // Simulate execution delay
+            setTimeout(() => {
+                // Show output
+                output.classList.add('visible');
+                
+                // Update completion state
+                button.textContent = 'Completed';
+                indicator.className = 'execution-indicator completed';
+                
+                // Update progress
+                cellsRun++;
+                updateProgress();
+                
+                // Show reflection question if exists
+                const question = document.getElementById(`question-${cellNumber}`);
+                if (question) {
+                    setTimeout(() => {
+                        question.classList.add('visible');
+                        currentQuestion = cellNumber;
+                    }, 500);
+                }
+                
+                // Remove selection after a moment
+                setTimeout(() => {
+                    cell.classList.remove('selected');
+                }, 1000);
+                
+            }, 1500 + Math.random() * 1000); // Random delay to simulate real execution
+        }
+
+        function selectOption(optionElement, isCorrect) {
+            const questionContainer = optionElement.closest('.reflection-question');
+            const options = questionContainer.querySelectorAll('.question-option');
+            const feedback = questionContainer.querySelector('.feedback');
+            
+            // Clear previous selections
+            options.forEach(opt => {
+                opt.classList.remove('selected', 'correct', 'incorrect');
+            });
+            
+            // Mark the selected option
+            optionElement.classList.add('selected');
+            
+            // Show feedback after a delay
+            setTimeout(() => {
+                if (isCorrect) {
+                    optionElement.classList.add('correct');
+                    feedback.className = 'feedback correct';
+                    feedback.textContent = '✅ Correct! Great job understanding this concept.';
+                } else {
+                    optionElement.classList.add('incorrect');
+                    feedback.className = 'feedback incorrect';
+                    feedback.textContent = '❌ Not quite right. Review the cell output and try to think about the main purpose or benefit.';
+                }
+                feedback.style.display = 'block';
+                
+                // Keep questions visible - no auto-hide
+                // Students can review their answers and feedback
+            }, 500);
+        }
+
+        // Auto-advance to final question after all cells are run
+        function checkCompletion() {
+            if (cellsRun >= totalCells) {
+                setTimeout(() => {
+                    document.getElementById('question-final').classList.add('visible');
+                }, 2000);
+            }
+        }
+
+        // Initialize
+        updateProgress();
+        
+        // Add some interactive behavior for markdown cells
+        document.querySelectorAll('.markdown-cell').forEach(cell => {
+            cell.addEventListener('click', () => {
+                cell.classList.add('selected');
+                setTimeout(() => {
+                    cell.classList.remove('selected');
+                }, 1000);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Notebook Simulation</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        /* Jupyter-like styling */
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            line-height: 1.5;
+        }
+        
+        .notebook-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .cell {
+            border: 1px solid #cfcfcf;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            background: #fafafa;
+        }
+        
+        .cell.selected {
+            border-color: #66bb6a;
+            box-shadow: 0 0 12px rgba(102, 187, 106, 0.3);
+        }
+        
+        .cell-toolbar {
+            background: #f7f7f7;
+            border-bottom: 1px solid #cfcfcf;
+            padding: 5px 10px;
+            font-size: 11px;
+            color: #999;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .cell-type {
+            font-weight: bold;
+        }
+        
+        .run-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        
+        .run-button:hover {
+            background: #45a049;
+        }
+        
+        .run-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .cell-content {
+            padding: 15px;
+        }
+        
+        .markdown-cell {
+            background: white;
+        }
+        
+        .code-cell {
+            background: white;
+        }
+        
+        .code-input {
+            background: #f8f8f8;
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+            padding: 10px;
+            font-family: "Monaco", "Consolas", "Courier New", monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            color: #333;
+            white-space: pre-wrap;
+            margin-bottom: 10px;
+        }
+        
+        .cell-output {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+            padding: 10px;
+            font-family: "Monaco", "Consolas", "Courier New", monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            color: #333;
+            white-space: pre-wrap;
+            display: none;
+            margin-top: 5px;
+        }
+        
+        .cell-output.visible {
+            display: block;
+        }
+        
+        .execution-count {
+            color: #307fc1;
+            font-weight: bold;
+        }
+        
+        .reflection-question {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 20px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .reflection-question.visible {
+            display: block;
+        }
+        
+        .question-title {
+            font-weight: bold;
+            color: #856404;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .question-options {
+            margin: 15px 0;
+        }
+        
+        .question-option {
+            margin: 8px 0;
+            padding: 8px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .question-option:hover {
+            background: #f0f0f0;
+        }
+        
+        .question-option.selected {
+            background: #d4edda;
+            border-color: #c3e6cb;
+        }
+        
+        .question-option.correct {
+            background: #d4edda;
+            border-color: #c3e6cb;
+        }
+        
+        .question-option.incorrect {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        
+        .feedback {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        
+        .feedback.correct {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .feedback.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: #4CAF50;
+            transition: width 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .notebook-title {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .execution-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ccc;
+            margin-left: 10px;
+        }
+        
+        .execution-indicator.running {
+            background: #ff9800;
+            animation: pulse 1s infinite;
+        }
+        
+        .execution-indicator.completed {
+            background: #4caf50;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Markdown content styling */
+        .content h1 {
+            background: linear-gradient(135deg, #034694 0%, #1E8449 50%, #D4AC0D 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .content h2 {
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            margin-top: 30px;
+        }
+
+        .content pre {
+            background: #f8f8f8;
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+            padding: 10px;
+            overflow-x: auto;
+        }
+
+        .content code {
+            background: #f8f8f8;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: "Monaco", "Consolas", "Courier New", monospace;
+        }
+
+        .content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .next-section {
+            display: flex;
+            align-items: center;
+            justify-content: left;
+            padding: 15px;
+            height: 40px;
+            background: linear-gradient(90deg, #7873f5 0%, #ff6ec4 100%);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #fff;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    
+    <div class="notebook-container">
+        <div class="notebook-title">
+            <h1>🧠 Interactive Notebook Simulation</h1>
+            <p>This simulation renders content from <code>notebook_content.md</code>. Edit that file to change the notebook content!</p>
+        </div>
+
+        <div id="content" class="content">
+            <!-- Content will be loaded here -->
+        </div>
+    </div>
+
+    <script>
+        let cellsRun = 0;
+        let totalCells = 0;
+        let currentQuestion = null;
+        let questions = [];
+
+        // Load and parse the markdown content
+        async function loadContent() {
+            try {
+                const response = await fetch('notebook_content.md');
+                const markdown = await response.text();
+                
+                // Parse the markdown content and create interactive cells
+                parseAndRenderContent(markdown);
+                
+            } catch (error) {
+                console.error('Error loading content:', error);
+                document.getElementById('content').innerHTML = '<p>Error loading notebook content. Make sure notebook_content.md is in the same directory.</p>';
+            }
+        }
+
+        function parseAndRenderContent(markdown) {
+            const contentDiv = document.getElementById('content');
+            const sections = markdown.split('---').filter(section => section.trim());
+            
+            sections.forEach((section, index) => {
+                const trimmedSection = section.trim();
+                
+                // Check if this section contains code blocks and questions
+                const codeBlocks = trimmedSection.match(/```python[\s\S]*?```/g);
+                const outputs = trimmedSection.match(/\*\*Output:\*\*[\s\S]*?```[\s\S]*?```/g);
+                const questions = trimmedSection.match(/\*\*Reflection Question:\*\*[\s\S]*?✓/g);
+                
+                if (codeBlocks) {
+                    // This is a code section
+                    renderCodeSection(trimmedSection, index, contentDiv);
+                } else {
+                    // This is a markdown section
+                    renderMarkdownSection(trimmedSection, index, contentDiv);
+                }
+            });
+
+            totalCells = document.querySelectorAll('.code-cell').length;
+            updateProgress();
+        }
+
+        function renderMarkdownSection(content, index, container) {
+            const cell = document.createElement('div');
+            cell.className = 'cell markdown-cell';
+            cell.setAttribute('data-cell-number', `md-${index}`);
+            
+            cell.innerHTML = `
+                <div class="cell-toolbar">
+                    <span class="cell-type">Markdown</span>
+                </div>
+                <div class="cell-content">
+                    ${marked.parse(content)}
+                </div>
+            `;
+            
+            container.appendChild(cell);
+        }
+
+        function renderCodeSection(content, index, container) {
+            const lines = content.split('\n');
+            let currentCodeBlock = '';
+            let currentOutput = '';
+            let currentQuestion = '';
+            let inCodeBlock = false;
+            let inOutput = false;
+            let inQuestion = false;
+            
+            // Parse the section
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                
+                if (line.startsWith('```python')) {
+                    inCodeBlock = true;
+                    continue;
+                } else if (line === '```' && inCodeBlock) {
+                    inCodeBlock = false;
+                    // Create code cell
+                    createCodeCell(currentCodeBlock, currentOutput, index, container);
+                    currentCodeBlock = '';
+                    continue;
+                } else if (line.startsWith('**Output:**')) {
+                    inOutput = true;
+                    continue;
+                } else if (line === '```' && inOutput) {
+                    inOutput = false;
+                    continue;
+                } else if (line.startsWith('**Reflection Question:**')) {
+                    inQuestion = true;
+                    currentQuestion = line.replace('**Reflection Question:**', '').trim();
+                    continue;
+                }
+                
+                if (inCodeBlock) {
+                    currentCodeBlock += line + '\n';
+                } else if (inOutput) {
+                    currentOutput += line + '\n';
+                } else if (inQuestion) {
+                    currentQuestion += '\n' + line;
+                }
+            }
+            
+            // Create question if exists
+            if (currentQuestion.trim()) {
+                createQuestionCell(currentQuestion, index, container);
+            }
+        }
+
+        function createCodeCell(code, output, index, container) {
+            const cellNumber = totalCells + 1;
+            
+            const cell = document.createElement('div');
+            cell.className = 'cell code-cell';
+            cell.setAttribute('data-cell-number', cellNumber);
+            
+            cell.innerHTML = `
+                <div class="cell-toolbar">
+                    <span class="cell-type">Code</span>
+                    <div>
+                        <button class="run-button" onclick="runCell(${cellNumber})">Run</button>
+                        <span class="execution-indicator" id="indicator-${cellNumber}"></span>
+                    </div>
+                </div>
+                <div class="cell-content">
+                    <div class="code-input">${code.trim()}</div>
+                    <div class="cell-output" id="output-${cellNumber}">${output.trim()}</div>
+                </div>
+            `;
+            
+            container.appendChild(cell);
+            totalCells++;
+        }
+
+        function createQuestionCell(questionContent, index, container) {
+            const questionId = `question-${index}`;
+            const lines = questionContent.split('\n');
+            const questionText = lines[0];
+            const options = lines.filter(line => line.match(/^[A-D]\)/));
+            
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'reflection-question';
+            questionDiv.id = questionId;
+            
+            let optionsHtml = '';
+            options.forEach(option => {
+                const isCorrect = option.includes('✓');
+                const cleanOption = option.replace('✓', '').trim();
+                optionsHtml += `
+                    <div class="question-option" onclick="selectOption(this, ${isCorrect})">
+                        ${cleanOption}
+                    </div>
+                `;
+            });
+            
+            questionDiv.innerHTML = `
+                <div class="question-title">🤔 Reflection Question</div>
+                <p><strong>${questionText}</strong></p>
+                <div class="question-options">
+                    ${optionsHtml}
+                </div>
+                <div class="feedback" id="feedback-${index}" style="display: none;"></div>
+            `;
+            
+            container.appendChild(questionDiv);
+            questions.push(questionId);
+        }
+
+        function updateProgress() {
+            const progress = totalCells > 0 ? (cellsRun / totalCells) * 100 : 0;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function runCell(cellNumber) {
+            const button = document.querySelector(`[data-cell-number="${cellNumber}"] .run-button`);
+            const indicator = document.getElementById(`indicator-${cellNumber}`);
+            const output = document.getElementById(`output-${cellNumber}`);
+            const cell = document.querySelector(`[data-cell-number="${cellNumber}"]`);
+            
+            if (button.disabled) return;
+            
+            // Disable button and show running state
+            button.disabled = true;
+            button.textContent = 'Running...';
+            indicator.className = 'execution-indicator running';
+            cell.classList.add('selected');
+            
+            // Simulate execution delay
+            setTimeout(() => {
+                // Show output
+                output.classList.add('visible');
+                
+                // Update completion state
+                button.textContent = 'Completed';
+                indicator.className = 'execution-indicator completed';
+                
+                // Update progress
+                cellsRun++;
+                updateProgress();
+                
+                // Show related question if exists
+                const questionIndex = Math.floor((cellNumber - 1) / 2); // Rough mapping
+                if (questions[questionIndex]) {
+                    setTimeout(() => {
+                        const questionEl = document.getElementById(questions[questionIndex]);
+                        if (questionEl) {
+                            questionEl.classList.add('visible');
+                        }
+                    }, 500);
+                }
+                
+                // Remove selection after a moment
+                setTimeout(() => {
+                    cell.classList.remove('selected');
+                }, 1000);
+                
+            }, 1500 + Math.random() * 1000);
+        }
+
+        function selectOption(optionElement, isCorrect) {
+            const questionContainer = optionElement.closest('.reflection-question');
+            const options = questionContainer.querySelectorAll('.question-option');
+            const feedback = questionContainer.querySelector('.feedback');
+            
+            // Clear previous selections
+            options.forEach(opt => {
+                opt.classList.remove('selected', 'correct', 'incorrect');
+            });
+            
+            // Mark the selected option
+            optionElement.classList.add('selected');
+            
+            // Show feedback after a delay
+            setTimeout(() => {
+                if (isCorrect) {
+                    optionElement.classList.add('correct');
+                    feedback.className = 'feedback correct';
+                    feedback.textContent = '✅ Correct! Great job understanding this concept.';
+                } else {
+                    optionElement.classList.add('incorrect');
+                    feedback.className = 'feedback incorrect';
+                    feedback.textContent = '❌ Not quite right. Review the cell output and try to think about the main purpose or benefit.';
+                }
+                feedback.style.display = 'block';
+                
+                // Keep questions visible - no auto-hide
+                // Students can review their answers and feedback
+            }, 500);
+        }
+
+        // Initialize
+        loadContent();
+    </script>
+</body>
+</html>
