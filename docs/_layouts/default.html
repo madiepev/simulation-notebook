@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ site.title }}</title>
+    <meta name="description" content="{{ site.description }}">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📓</text></svg>">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #ffffff;
+        }
+        .hero {
+            text-align: center;
+            padding: 60px 0;
+            background: linear-gradient(135deg, #f0f7ff 0%, #e6f3ff 100%);
+            border-radius: 12px;
+            margin-bottom: 40px;
+        }
+        .hero h1 {
+            font-size: 3rem;
+            margin: 0 0 20px 0;
+            color: #24292f;
+        }
+        .hero p {
+            font-size: 1.3rem;
+            color: #656d76;
+            margin: 0;
+        }
+        .notebooks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }
+        .notebook-card {
+            border: 1px solid #d1d9e0;
+            border-radius: 8px;
+            padding: 20px;
+            background: white;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+        .notebook-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border-color: #0969da;
+            text-decoration: none;
+        }
+        .notebook-card h3 {
+            margin: 0 0 10px 0;
+            color: #0969da;
+        }
+        .notebook-card p {
+            margin: 0;
+            color: #656d76;
+        }
+        .notebook-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #8b949e;
+        }
+        .difficulty {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .difficulty.beginner {
+            background: #d4edda;
+            color: #155724;
+        }
+        .difficulty.intermediate {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .difficulty.advanced {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid #d1d9e0;
+            color: #656d76;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>📓 {{ site.title }}</h1>
+        <p>{{ site.description }}</p>
+    </div>
+
+    <main>
+        {{ content }}
+        
+        <section class="notebooks-section">
+            <h2>Available Notebooks</h2>
+            <div class="notebooks-grid">
+                {% for notebook in site.notebooks %}
+                <a href="{{ notebook.url | relative_url }}" class="notebook-card">
+                    <h3>{{ notebook.title }}</h3>
+                    <p>{{ notebook.description | default: "Interactive notebook simulation" }}</p>
+                    <div class="notebook-meta">
+                        <span>
+                            {% if notebook.date %}
+                                {{ notebook.date | date: "%b %d, %Y" }}
+                            {% endif %}
+                        </span>
+                        <span class="difficulty {{ notebook.difficulty | default: 'beginner' }}">
+                            {{ notebook.difficulty | default: 'Beginner' | capitalize }}
+                        </span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Interactive Jupyter Notebook Simulations | Built with ❤️ for learning</p>
+    </footer>
+</body>
+</html>

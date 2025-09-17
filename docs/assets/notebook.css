@@ -1,0 +1,460 @@
+/* Interactive Notebook Styling */
+/* Simulates Jupyter Notebook interface for GitHub Pages */
+
+:root {
+  --jupyter-bg: #ffffff;
+  --jupyter-border: #e1e1e1;
+  --jupyter-accent: #0969da;
+  --jupyter-code-bg: #f6f8fa;
+  --jupyter-code-border: #d1d9e0;
+  --jupyter-output-bg: #ffffff;
+  --jupyter-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --jupyter-hover-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  --jupyter-success: #28a745;
+  --jupyter-warning: #ffc107;
+  --jupyter-danger: #dc3545;
+  --jupyter-font-mono: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+}
+
+/* Navigation */
+.notebook-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--jupyter-border);
+}
+
+.nav-home {
+  text-decoration: none;
+  color: var(--jupyter-accent);
+  font-weight: 500;
+  font-size: 1.1rem;
+}
+
+.nav-home:hover {
+  text-decoration: underline;
+}
+
+.nav-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.nav-button {
+  background: var(--jupyter-accent);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.nav-button:hover {
+  background: #0550ae;
+}
+
+.nav-button:active {
+  transform: translateY(1px);
+}
+
+/* Footer */
+.notebook-footer {
+  margin-top: 60px;
+  padding: 30px 0;
+  border-top: 2px solid var(--jupyter-border);
+  text-align: center;
+  color: #656d76;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.footer-content p {
+  margin: 0;
+}
+
+.footer-content a {
+  color: var(--jupyter-accent);
+  text-decoration: none;
+}
+
+.footer-content a:hover {
+  text-decoration: underline;
+}
+
+.footer-stats {
+  font-size: 0.9rem;
+  color: #8b949e;
+}
+
+.notebook-meta {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #656d76;
+}
+
+.notebook-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background: var(--jupyter-bg);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+}
+
+/* Header */
+.notebook-header {
+  border-bottom: 2px solid var(--jupyter-border);
+  padding-bottom: 20px;
+  margin-bottom: 30px;
+}
+
+.notebook-title {
+  font-size: 2.5rem;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+  color: #24292f;
+}
+
+.notebook-description {
+  font-size: 1.1rem;
+  color: #656d76;
+  margin: 0;
+}
+
+/* Cell Styling */
+.cell {
+  margin: 15px 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.cell:hover {
+  border-color: var(--jupyter-border);
+  box-shadow: var(--jupyter-hover-shadow);
+}
+
+/* Markdown Cells */
+.markdown-cell {
+  padding: 15px 20px;
+  background: var(--jupyter-bg);
+}
+
+.markdown-cell h1, .markdown-cell h2, .markdown-cell h3, 
+.markdown-cell h4, .markdown-cell h5, .markdown-cell h6 {
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+.markdown-cell hr {
+  border: none;
+  height: 1px;
+  background: var(--jupyter-border);
+  margin: 25px 0;
+}
+
+/* Code Cells */
+.code-cell {
+  border: 1px solid var(--jupyter-code-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--jupyter-bg);
+  box-shadow: var(--jupyter-shadow);
+  margin: 20px 0;
+}
+
+.code-cell.executed {
+  border-left: 4px solid var(--jupyter-success);
+}
+
+.code-cell.executing {
+  border-left: 4px solid var(--jupyter-warning);
+}
+
+/* Cell Header */
+.cell-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 15px;
+  background: #f8f9fa;
+  border-bottom: 1px solid var(--jupyter-code-border);
+  font-size: 0.85rem;
+  color: #656d76;
+}
+
+.cell-number {
+  font-family: var(--jupyter-font-mono);
+  font-weight: 600;
+}
+
+.run-button {
+  background: var(--jupyter-accent);
+  color: white;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.run-button:hover {
+  background: #0550ae;
+}
+
+.run-button:disabled {
+  background: #8b949e;
+  cursor: not-allowed;
+}
+
+.execution-indicator {
+  display: none;
+  font-size: 0.8rem;
+  color: var(--jupyter-warning);
+}
+
+.execution-indicator.show {
+  display: inline;
+}
+
+/* Code Input */
+.code-input {
+  position: relative;
+}
+
+.code-input pre {
+  margin: 0;
+  padding: 15px 20px;
+  background: var(--jupyter-code-bg);
+  border: none;
+  border-radius: 0;
+  font-family: var(--jupyter-font-mono);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  overflow-x: auto;
+}
+
+.code-input code {
+  background: none;
+  padding: 0;
+  font-family: inherit;
+}
+
+/* Code Output */
+.code-output {
+  background: var(--jupyter-output-bg);
+  border-top: 1px solid var(--jupyter-code-border);
+  min-height: 40px;
+  display: none;
+}
+
+.code-output.show {
+  display: block;
+}
+
+.code-output pre {
+  margin: 0;
+  padding: 15px 20px;
+  font-family: var(--jupyter-font-mono);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.output-text {
+  color: #24292f;
+}
+
+.output-error {
+  color: var(--jupyter-danger);
+}
+
+.output-success {
+  color: var(--jupyter-success);
+}
+
+/* Loading Animation */
+.loading-dots {
+  display: inline-block;
+}
+
+.loading-dots::after {
+  content: '';
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { content: ''; }
+  25% { content: '.'; }
+  50% { content: '..'; }
+  75% { content: '...'; }
+  100% { content: ''; }
+}
+
+/* Reflection Questions */
+.reflection-question {
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f3ff 100%);
+  border: 1px solid #b6d7ff;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 30px 0;
+  box-shadow: var(--jupyter-shadow);
+}
+
+.reflection-question h4 {
+  margin: 0 0 15px 0;
+  color: var(--jupyter-accent);
+  font-size: 1.1rem;
+}
+
+.reflection-question p {
+  margin: 0 0 15px 0;
+  font-weight: 500;
+}
+
+.choices {
+  margin: 15px 0;
+}
+
+.choices label {
+  display: block;
+  padding: 8px 12px;
+  margin: 5px 0;
+  background: white;
+  border: 1px solid #d1d9e0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.choices label:hover {
+  background: #f6f8fa;
+  border-color: var(--jupyter-accent);
+}
+
+.choices input[type="radio"] {
+  margin-right: 8px;
+}
+
+.choices label.selected {
+  background: #e6f3ff;
+  border-color: var(--jupyter-accent);
+}
+
+.choices label.correct {
+  background: #d4edda;
+  border-color: var(--jupyter-success);
+  color: #155724;
+}
+
+.choices label.incorrect {
+  background: #f8d7da;
+  border-color: var(--jupyter-danger);
+  color: #721c24;
+}
+
+.answer {
+  display: none;
+  margin-top: 15px;
+  padding: 15px;
+  background: #d4edda;
+  border: 1px solid var(--jupyter-success);
+  border-radius: 4px;
+  color: #155724;
+}
+
+.answer.show {
+  display: block;
+}
+
+.answer.incorrect {
+  background: #f8d7da;
+  border-color: var(--jupyter-danger);
+  color: #721c24;
+}
+
+/* Progress Bar */
+.progress-container {
+  position: sticky;
+  top: 0;
+  background: white;
+  border-bottom: 1px solid var(--jupyter-border);
+  padding: 10px 0;
+  margin-bottom: 20px;
+  z-index: 100;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background: #e1e1e1;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--jupyter-accent), var(--jupyter-success));
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #656d76;
+  margin-top: 5px;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .notebook-container {
+    padding: 15px;
+  }
+  
+  .notebook-title {
+    font-size: 2rem;
+  }
+  
+  .code-input pre, .code-output pre {
+    padding: 12px 15px;
+    font-size: 0.8rem;
+  }
+  
+  .cell-header {
+    padding: 6px 12px;
+  }
+  
+  .reflection-question {
+    padding: 15px;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .run-button, .cell-header, .progress-container {
+    display: none;
+  }
+  
+  .code-output {
+    display: block !important;
+  }
+  
+  .reflection-question {
+    page-break-inside: avoid;
+  }
+}

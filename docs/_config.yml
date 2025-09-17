@@ -1,0 +1,41 @@
+# Interactive Simulation Notebooks
+
+url: "https://madiepev.github.io"
+baseurl: "/simulation-notebook"
+title: "Interactive Simulation Notebooks"
+description: "Learn by doing - Interactive Jupyter notebook simulations"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+
+# Kramdown settings
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    css_class: 'highlight'
+
+# Collections
+collections:
+  notebooks:
+    output: true
+    permalink: /notebooks/:name/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "notebooks"
+    values:
+      layout: "notebook"
+
+# Exclude from build
+exclude:
+  - scripts/
+  - README.md
+  - Gemfile
+  - Gemfile.lock
