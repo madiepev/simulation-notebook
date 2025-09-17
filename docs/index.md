@@ -25,4 +25,9 @@ These interactive notebook simulations let you experience Jupyter notebooks dire
 - **Mobile responsive** design for learning on any device
 - **Lightweight** conversion from existing notebooks
 
+### 🚀 Featured Notebook
+
+**[📚 Step 2: Customize The Tone & Style With SFT]({{ '/notebooks/01-basic-fine-tuning/' | relative_url }})**  
+Learn how to fine-tune GPT models to improve tone and style with shorter prompts using Supervised Fine-Tuning (SFT). This interactive simulation walks you through the complete fine-tuning process with hands-on code execution and reflection questions.
+
 Get started by selecting a notebook below!
