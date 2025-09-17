@@ -306,6 +306,9 @@
         async function loadContent() {
             try {
                 const response = await fetch('notebook_content.md');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
                 const markdown = await response.text();
                 
                 // Parse the markdown content and create interactive cells
@@ -313,7 +316,21 @@
                 
             } catch (error) {
                 console.error('Error loading content:', error);
-                document.getElementById('content').innerHTML = '<p>Error loading notebook content. Make sure notebook_content.md is in the same directory.</p>';
+                document.getElementById('content').innerHTML = `
+                    <div style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 20px; border-radius: 8px; color: #721c24;">
+                        <h3>⚠️ Content Loading Error</h3>
+                        <p><strong>Could not load notebook_content.md</strong></p>
+                        <p>Make sure the file <code>notebook_content.md</code> is in the same directory as this HTML file.</p>
+                        <p><strong>Error details:</strong> ${error.message}</p>
+                        <hr>
+                        <p><strong>Quick fix:</strong> Ensure both files are in the same folder:</p>
+                        <ul>
+                            <li>📄 notebook_template.html</li>
+                            <li>📝 notebook_content.md</li>
+                        </ul>
+                        <p>Then refresh this page.</p>
+                    </div>
+                `;
             }
         }
 
@@ -324,12 +341,8 @@
             sections.forEach((section, index) => {
                 const trimmedSection = section.trim();
                 
-                // Check if this section contains code blocks and questions
-                const codeBlocks = trimmedSection.match(/```python[\s\S]*?```/g);
-                const outputs = trimmedSection.match(/\*\*Output:\*\*[\s\S]*?```[\s\S]*?```/g);
-                const questions = trimmedSection.match(/\*\*Reflection Question:\*\*[\s\S]*?✓/g);
-                
-                if (codeBlocks) {
+                // Check if this section contains code blocks
+                if (trimmedSection.includes('```python')) {
                     // This is a code section
                     renderCodeSection(trimmedSection, index, contentDiv);
                 } else {
@@ -361,54 +374,61 @@
 
         function renderCodeSection(content, index, container) {
             const lines = content.split('\n');
-            let currentCodeBlock = '';
-            let currentOutput = '';
-            let currentQuestion = '';
-            let inCodeBlock = false;
-            let inOutput = false;
-            let inQuestion = false;
+            let i = 0;
             
-            // Parse the section
-            for (let i = 0; i < lines.length; i++) {
+            while (i < lines.length) {
                 const line = lines[i];
                 
+                // Look for code blocks
                 if (line.startsWith('```python')) {
-                    inCodeBlock = true;
-                    continue;
-                } else if (line === '```' && inCodeBlock) {
-                    inCodeBlock = false;
-                    // Create code cell
-                    createCodeCell(currentCodeBlock, currentOutput, index, container);
-                    currentCodeBlock = '';
-                    continue;
-                } else if (line.startsWith('**Output:**')) {
-                    inOutput = true;
-                    continue;
-                } else if (line === '```' && inOutput) {
-                    inOutput = false;
-                    continue;
-                } else if (line.startsWith('**Reflection Question:**')) {
-                    inQuestion = true;
-                    currentQuestion = line.replace('**Reflection Question:**', '').trim();
-                    continue;
+                    let codeBlock = '';
+                    i++; // Skip the opening ```python
+                    
+                    // Collect code until closing ```
+                    while (i < lines.length && lines[i] !== '```') {
+                        codeBlock += lines[i] + '\n';
+                        i++;
+                    }
+                    i++; // Skip the closing ```
+                    
+                    // Look for output after code block
+                    let output = '';
+                    if (i < lines.length && lines[i].includes('**Output:**')) {
+                        i++; // Skip the **Output:** line
+                        if (i < lines.length && lines[i].startsWith('```')) {
+                            i++; // Skip opening ```
+                            while (i < lines.length && lines[i] !== '```') {
+                                output += lines[i] + '\n';
+                                i++;
+                            }
+                            i++; // Skip closing ```
+                        }
+                    }
+                    
+                    // Create the code cell
+                    createCodeCell(codeBlock.trim(), output.trim(), totalCells, container);
                 }
                 
-                if (inCodeBlock) {
-                    currentCodeBlock += line + '\n';
-                } else if (inOutput) {
-                    currentOutput += line + '\n';
-                } else if (inQuestion) {
-                    currentQuestion += '\n' + line;
+                // Look for reflection questions
+                else if (line.includes('**Reflection Question:**')) {
+                    let questionContent = '';
+                    let startIndex = i;
+                    
+                    // Collect question content until we hit another section or end
+                    while (i < lines.length && !lines[i].startsWith('##') && !lines[i].startsWith('```python')) {
+                        questionContent += lines[i] + '\n';
+                        i++;
+                    }
+                    
+                    createQuestionCell(questionContent.trim(), startIndex, container);
+                    i--; // Back up one since we'll increment at the end of the loop
                 }
-            }
-            
-            // Create question if exists
-            if (currentQuestion.trim()) {
-                createQuestionCell(currentQuestion, index, container);
+                
+                i++;
             }
         }
 
-        function createCodeCell(code, output, index, container) {
+        function createCodeCell(code, output, cellIndex, container) {
             const cellNumber = totalCells + 1;
             
             const cell = document.createElement('div');
@@ -424,8 +444,8 @@
                     </div>
                 </div>
                 <div class="cell-content">
-                    <div class="code-input">${code.trim()}</div>
-                    <div class="cell-output" id="output-${cellNumber}">${output.trim()}</div>
+                    <div class="code-input">${code}</div>
+                    <div class="cell-output" id="output-${cellNumber}">${output}</div>
                 </div>
             `;
             
@@ -500,15 +520,18 @@
                 updateProgress();
                 
                 // Show related question if exists
-                const questionIndex = Math.floor((cellNumber - 1) / 2); // Rough mapping
-                if (questions[questionIndex]) {
-                    setTimeout(() => {
-                        const questionEl = document.getElementById(questions[questionIndex]);
-                        if (questionEl) {
-                            questionEl.classList.add('visible');
-                        }
-                    }, 500);
-                }
+                setTimeout(() => {
+                    // Look for the next question element after this cell
+                    const allQuestions = document.querySelectorAll('.reflection-question');
+                    const nextQuestion = Array.from(allQuestions).find(q => 
+                        !q.classList.contains('visible') && 
+                        q.getBoundingClientRect().top > cell.getBoundingClientRect().bottom
+                    );
+                    
+                    if (nextQuestion) {
+                        nextQuestion.classList.add('visible');
+                    }
+                }, 500);
                 
                 // Remove selection after a moment
                 setTimeout(() => {
