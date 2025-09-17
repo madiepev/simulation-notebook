@@ -391,17 +391,29 @@
                     }
                     i++; // Skip the closing ```
                     
-                    // Look for output after code block
+                    // Look for output - skip empty lines and look for **Output:**
                     let output = '';
+                    while (i < lines.length && (lines[i].trim() === '' || !lines[i].includes('**Output:**'))) {
+                        i++;
+                    }
+                    
                     if (i < lines.length && lines[i].includes('**Output:**')) {
                         i++; // Skip the **Output:** line
+                        
+                        // Skip empty lines until we find the opening ```
+                        while (i < lines.length && lines[i].trim() === '') {
+                            i++;
+                        }
+                        
                         if (i < lines.length && lines[i].startsWith('```')) {
                             i++; // Skip opening ```
                             while (i < lines.length && lines[i] !== '```') {
                                 output += lines[i] + '\n';
                                 i++;
                             }
-                            i++; // Skip closing ```
+                            if (i < lines.length) {
+                                i++; // Skip closing ```
+                            }
                         }
                     }
                     
@@ -434,6 +446,9 @@
             const cell = document.createElement('div');
             cell.className = 'cell code-cell';
             cell.setAttribute('data-cell-number', cellNumber);
+            
+            // Debug: log what we're creating
+            console.log(`Creating cell ${cellNumber}:`, { code: code.substring(0, 50) + '...', output: output.substring(0, 50) + '...' });
             
             cell.innerHTML = `
                 <div class="cell-toolbar">
@@ -493,10 +508,13 @@
         }
 
         function runCell(cellNumber) {
+            console.log(`Running cell ${cellNumber}`);
             const button = document.querySelector(`[data-cell-number="${cellNumber}"] .run-button`);
             const indicator = document.getElementById(`indicator-${cellNumber}`);
             const output = document.getElementById(`output-${cellNumber}`);
             const cell = document.querySelector(`[data-cell-number="${cellNumber}"]`);
+            
+            console.log('Elements found:', { button: !!button, indicator: !!indicator, output: !!output, cell: !!cell });
             
             if (button.disabled) return;
             
@@ -508,6 +526,8 @@
             
             // Simulate execution delay
             setTimeout(() => {
+                console.log(`Showing output for cell ${cellNumber}:`, output.textContent);
+                
                 // Show output
                 output.classList.add('visible');
                 
