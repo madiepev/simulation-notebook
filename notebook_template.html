@@ -301,6 +301,7 @@
         let totalCells = 0;
         let currentQuestion = null;
         let questions = [];
+        let cellQuestionMap = new Map(); // Maps cell numbers to question IDs
 
         // Load and parse the markdown content
         async function loadContent() {
@@ -352,6 +353,7 @@
             });
 
             totalCells = document.querySelectorAll('.code-cell').length;
+            console.log(`Total cells: ${totalCells}, Cell-Question mappings:`, cellQuestionMap);
             updateProgress();
         }
 
@@ -375,6 +377,7 @@
         function renderCodeSection(content, index, container) {
             const lines = content.split('\n');
             let i = 0;
+            let lastCreatedCellNumber = null;
             
             while (i < lines.length) {
                 const line = lines[i];
@@ -418,6 +421,7 @@
                     }
                     
                     // Create the code cell
+                    lastCreatedCellNumber = totalCells + 1;
                     createCodeCell(codeBlock.trim(), output.trim(), totalCells, container);
                 }
                 
@@ -432,7 +436,14 @@
                         i++;
                     }
                     
-                    createQuestionCell(questionContent.trim(), startIndex, container);
+                    const questionId = createQuestionCell(questionContent.trim(), startIndex, container);
+                    
+                    // Associate this question with the last created cell
+                    if (lastCreatedCellNumber !== null) {
+                        cellQuestionMap.set(lastCreatedCellNumber, questionId);
+                        console.log(`Associated question ${questionId} with cell ${lastCreatedCellNumber}`);
+                    }
+                    
                     i--; // Back up one since we'll increment at the end of the loop
                 }
                 
@@ -470,16 +481,38 @@
 
         function createQuestionCell(questionContent, index, container) {
             const questionId = `question-${index}`;
-            const lines = questionContent.split('\n');
-            const questionText = lines[0];
-            const options = lines.filter(line => line.match(/^[A-D]\)/));
+            const lines = questionContent.split('\n').filter(line => line.trim());
+            
+            // Find the question text (line starting with **Reflection Question:** or containing it)
+            let questionText = '';
+            let optionLines = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                if (line.includes('**Reflection Question:**')) {
+                    // Extract question text from this line or the next line
+                    questionText = line.replace('**Reflection Question:**', '').trim();
+                    if (!questionText && i + 1 < lines.length) {
+                        questionText = lines[i + 1].trim();
+                        i++; // Skip the next line since we used it
+                    }
+                } else if (line.match(/^[A-D]\)/)) {
+                    optionLines.push(line);
+                } else if (questionText && !line.match(/^[A-D]\)/) && line.trim()) {
+                    // This might be a continuation of the question text
+                    if (!optionLines.length) {
+                        questionText = line.trim();
+                    }
+                }
+            }
             
             const questionDiv = document.createElement('div');
             questionDiv.className = 'reflection-question';
             questionDiv.id = questionId;
+            questionDiv.setAttribute('data-for-cell', 'pending'); // Will be updated by associateQuestionsWithCells
             
             let optionsHtml = '';
-            options.forEach(option => {
+            optionLines.forEach(option => {
                 const isCorrect = option.includes('✓');
                 const cleanOption = option.replace('✓', '').trim();
                 optionsHtml += `
@@ -500,6 +533,8 @@
             
             container.appendChild(questionDiv);
             questions.push(questionId);
+            
+            return questionId;
         }
 
         function updateProgress() {
@@ -541,15 +576,18 @@
                 
                 // Show related question if exists
                 setTimeout(() => {
-                    // Look for the next question element after this cell
-                    const allQuestions = document.querySelectorAll('.reflection-question');
-                    const nextQuestion = Array.from(allQuestions).find(q => 
-                        !q.classList.contains('visible') && 
-                        q.getBoundingClientRect().top > cell.getBoundingClientRect().bottom
-                    );
+                    // Find the question specifically associated with this cell
+                    const questionId = cellQuestionMap.get(cellNumber);
+                    console.log(`Looking for question ${questionId} for cell ${cellNumber}`);
                     
-                    if (nextQuestion) {
-                        nextQuestion.classList.add('visible');
+                    if (questionId) {
+                        const associatedQuestion = document.getElementById(questionId);
+                        if (associatedQuestion && !associatedQuestion.classList.contains('visible')) {
+                            console.log(`Showing question ${questionId}`);
+                            associatedQuestion.classList.add('visible');
+                            // Smooth scroll to show the question
+                            associatedQuestion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
                     }
                 }, 500);
                 
